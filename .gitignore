@@ -216,3 +216,11 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local VS Code settings
+.vscode/
+# Accidental frontend backup
+frontend/app_backup/
+
+# Local backup files
+*.backup.tsx
