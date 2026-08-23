@@ -7,7 +7,7 @@ from fastapi import (
     Response,
     status,
 )
-
+from app.core.config import settings
 from sqlalchemy.orm import Session
 from app.domains.security.detections.authentication import (
     detect_repeated_login_failures, detect_password_spray, detect_success_after_failures
@@ -160,13 +160,17 @@ def login(
     )
 
     response.set_cookie(
-        key="titan_session",
-        value=raw_session_token,
-        httponly=True,
-        secure=False,
-        samesite="lax",
-        max_age=60 * 60 * 12,
-    )
+    key=settings.SESSION_COOKIE_NAME,
+    value=raw_session_token,
+    httponly=True,
+    secure=settings.session_cookie_secure,
+    samesite=settings.SESSION_COOKIE_SAMESITE,
+    max_age=(
+        60
+        * 60
+        * settings.SESSION_TTL_HOURS
+    ),
+)
 
     return LoginResponse(
         message="Authentication successful.",
@@ -224,11 +228,11 @@ def logout(
     )
 
     response.delete_cookie(
-        key="titan_session",
-        httponly=True,
-        secure=False,
-        samesite="lax",
-    )
+    key=settings.SESSION_COOKIE_NAME,
+    httponly=True,
+    secure=settings.session_cookie_secure,
+    samesite=settings.SESSION_COOKIE_SAMESITE,
+)
 
     response.status_code = status.HTTP_204_NO_CONTENT
 

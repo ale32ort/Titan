@@ -1,6 +1,10 @@
 from functools import lru_cache
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic import model_validator
+from pydantic_settings import (
+    BaseSettings,
+    SettingsConfigDict,
+)
 
 
 class Settings(BaseSettings):
@@ -18,16 +22,68 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "CHANGE_ME"
 
     DATABASE_URL: str = (
-        "postgresql+psycopg://titan:titan@localhost:5432/titan"
+        "postgresql+psycopg://"
+        "titan:titan@localhost:5432/titan"
     )
+
     ANTHROPIC_API_KEY: str | None = None
     ANTHROPIC_MODEL: str = "claude-sonnet-5"
+
+    SESSION_TTL_HOURS: int = 12
+    SESSION_COOKIE_NAME: str = "titan_session"
+    SESSION_COOKIE_SAMESITE: str = "lax"
 
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,
         extra="ignore",
     )
+
+    @property
+    def is_production(self) -> bool:
+        return (
+            self.ENVIRONMENT.strip().lower()
+            == "production"
+        )
+
+    @property
+    def session_cookie_secure(self) -> bool:
+        """
+        Secure cookies must be enabled in production.
+
+        Local development currently uses HTTP, so Secure
+        remains false outside production.
+        """
+        return self.is_production
+
+    @model_validator(mode="after")
+    def validate_security_configuration(
+        self,
+    ) -> "Settings":
+        """
+        Refuse obviously unsafe configuration in production.
+        """
+
+        if not self.is_production:
+            return self
+
+        unsafe_secrets = {
+            "",
+            "CHANGE_ME",
+            "replace_with_secure_secret",
+        }
+
+        if self.SECRET_KEY.strip() in unsafe_secrets:
+            raise ValueError(
+                "Production requires a secure SECRET_KEY."
+            )
+
+        if self.DEBUG:
+            raise ValueError(
+                "DEBUG must be disabled in production."
+            )
+
+        return self
 
 
 @lru_cache

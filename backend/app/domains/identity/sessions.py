@@ -4,12 +4,12 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from app.domains.identity.models import User
-
+from app.core.config import settings
 
 from app.domains.identity.session_models import UserSession
 
 
-SESSION_TTL_HOURS = 12
+
 
 
 def _hash_token(token: str) -> str:
@@ -29,8 +29,9 @@ def create_session(
         user_id=user_id,
         token_hash=token_hash,
         expires_at=datetime.now(timezone.utc)
-        + timedelta(hours=SESSION_TTL_HOURS),
-    )
++ timedelta(
+    hours=settings.SESSION_TTL_HOURS)
+),
 
     db.add(session)
     db.commit()
