@@ -2,16 +2,21 @@ from collections.abc import Generator
 from datetime import datetime, timezone
 
 import pytest
+from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app.db.base import Base
+from app.db.session import get_db
+from app.main import create_app
 
-# Import models so SQLAlchemy knows about every table
-# used by these tests before Base.metadata.create_all().
+# Explicit model imports ensure SQLAlchemy knows the
+# tables needed by the tests before create_all().
+from app.domains.identity.models import User
+from app.domains.identity.session_models import UserSession  # noqa: F401
 from app.domains.security.evidence import FindingEvidence  # noqa: F401
-from app.domains.security.findings import SecurityFinding  # noqa: F401
+from app.domains.security.findings import SecurityFinding
 from app.domains.security.models import AuditEvent
 
 
@@ -62,6 +67,84 @@ def db() -> Generator[Session, None, None]:
         engine.dispose()
 
 
+@pytest.fixture()
+def client(
+    db: Session,
+) -> Generator[TestClient, None, None]:
+    """
+    Create Titan's real FastAPI application while replacing
+    only its database dependency with the isolated test DB.
+    """
+
+    application = create_app()
+
+    def override_get_db():
+        yield db
+
+    application.dependency_overrides[
+        get_db
+    ] = override_get_db
+
+    with TestClient(application) as test_client:
+        yield test_client
+
+    application.dependency_overrides.clear()
+
+
+def create_test_user(
+    db: Session,
+    *,
+    email: str,
+    role: str = "user",
+) -> User:
+    """
+    Create an authenticated-user object for RBAC/API tests.
+
+    Password verification is not part of these authorization
+    tests, so the password hash is a harmless placeholder.
+    """
+
+    user = User(
+        email=email,
+        first_name="Titan",
+        last_name="Tester",
+        password_hash="test-only-hash",
+        is_active=True,
+        is_verified=True,
+        role=role,
+    )
+
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+
+    return user
+
+
+def create_test_finding(
+    db: Session,
+) -> SecurityFinding:
+    """
+    Create one finding so authorized analysts receive
+    a meaningful successful API response.
+    """
+
+    finding = SecurityFinding(
+        finding_type="AUTH_BRUTE_FORCE_SUSPECTED",
+        subject="rbac-target@example.com",
+        severity="high",
+        status="open",
+        trigger_count=1,
+        rule_id="AUTH-001",
+    )
+
+    db.add(finding)
+    db.commit()
+    db.refresh(finding)
+
+    return finding
+
+
 def create_audit_event(
     db: Session,
     *,
@@ -81,7 +164,10 @@ def create_audit_event(
         result=result,
         ip_address=ip_address,
         user_agent="pytest-agent",
-        created_at=created_at or datetime.now(timezone.utc),
+        created_at=(
+            created_at
+            or datetime.now(timezone.utc)
+        ),
         event_metadata={
             "source": "pytest",
         },
