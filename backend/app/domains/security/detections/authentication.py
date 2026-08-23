@@ -124,11 +124,38 @@ def detect_success_after_failures(
     """
     Detect a successful authentication following repeated
     failed attempts against the same account.
+
+    The successful authentication is the anchor event.
+    Titan only considers failures that occurred before that
+    success and within the rule's configured time window.
     """
 
+    success_event = db.get(
+        AuditEvent,
+        success_event_id,
+    )
+
+    # The referenced event must actually exist.
+    if success_event is None:
+        return False
+
+    # AUTH-003 is specifically about a successful login.
+    if success_event.event_type != "LOGIN_SUCCESS":
+        return False
+
+    # The success must belong to the same account being evaluated.
+    if success_event.email != email:
+        return False
+
+    # Be defensive about malformed/inconsistent audit telemetry.
+    if success_event.result != "success":
+        return False
+
     window_start = (
-        datetime.now(timezone.utc)
-        - timedelta(minutes=AUTH_003.window_minutes)
+        success_event.created_at
+        - timedelta(
+            minutes=AUTH_003.window_minutes
+        )
     )
 
     failed_events = db.scalars(
@@ -137,24 +164,21 @@ def detect_success_after_failures(
             AuditEvent.event_type == "LOGIN_FAILED",
             AuditEvent.email == email,
             AuditEvent.created_at >= window_start,
+            AuditEvent.created_at < success_event.created_at,
         )
-        .order_by(AuditEvent.created_at.asc())
+        .order_by(
+            AuditEvent.created_at.asc()
+        )
     ).all()
 
     if len(failed_events) < AUTH_003.threshold:
         return False
 
-    success_event = db.get(
-        AuditEvent,
-        success_event_id,
-    )
-
-    if success_event is None:
-        return False
-
     finding = upsert_security_finding(
         db,
-        finding_type="SUCCESS_AFTER_REPEATED_FAILURES",
+        finding_type=(
+            "SUCCESS_AFTER_REPEATED_FAILURES"
+        ),
         subject=email,
         severity=AUTH_003.severity,
         rule_id=AUTH_003.rule_id,
