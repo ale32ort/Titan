@@ -37,6 +37,7 @@ from app.domains.security.analyst_note_service import (
 from app.domains.security.timeline import (
     build_case_timeline,
 )
+from app.domains.identity.csrf import require_csrf_token
 
 router = APIRouter(
     prefix="/security",
@@ -140,6 +141,7 @@ def update_security_finding_status(
     finding_id: str,
     payload: SecurityFindingStatusUpdate,
     request: Request,
+    csrf_valid: None = Depends(require_csrf_token),
     current_user: User = Depends(require_security_analyst),
     db: Session = Depends(get_db),
 ) -> SecurityFindingPublic:
@@ -202,6 +204,7 @@ def update_security_finding_status(
 )
 def triage_security_finding(
     finding_id: str,
+    csrf_valid: None = Depends(require_csrf_token),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_security_analyst),
 ) -> AITriageResponse:
@@ -300,6 +303,7 @@ def get_triage_run(
 def add_analyst_note(
     finding_id: str,
     payload: AnalystNoteCreate,
+    csrf_valid: None = Depends(require_csrf_token),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_security_analyst),
 ) -> AnalystNotePublic:
@@ -369,6 +373,7 @@ def list_analyst_notes(
 )
 def assign_finding_to_me(
     finding_id: str,
+    csrf_valid: None = Depends(require_csrf_token),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_security_analyst),
 ) -> SecurityFindingPublic:
@@ -419,6 +424,7 @@ def assign_finding_to_me(
 )
 def unassign_finding(
     finding_id: str,
+    csrf_valid: None = Depends(require_csrf_token),
     db: Session = Depends(get_db),
     current_user: User = Depends(require_security_analyst),
 ) -> SecurityFindingPublic:

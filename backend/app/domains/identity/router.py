@@ -31,7 +31,7 @@ from app.domains.identity.sessions import (
     revoke_session,
 )
 from app.domains.security.service import record_audit_event
-
+from app.domains.identity.csrf import create_csrf_token
 
 
 router = APIRouter(
@@ -172,6 +172,23 @@ def login(
     ),
 )
 
+    csrf_token = create_csrf_token(
+    raw_session_token
+)
+
+    response.set_cookie(
+    key=settings.CSRF_COOKIE_NAME,
+    value=csrf_token,
+    httponly=False,
+    secure=settings.session_cookie_secure,
+    samesite=settings.SESSION_COOKIE_SAMESITE,
+    max_age=(
+        60
+        * 60
+        * settings.SESSION_TTL_HOURS
+    ),
+)
+
     return LoginResponse(
         message="Authentication successful.",
         user=UserPublic.model_validate(
@@ -233,6 +250,12 @@ def logout(
     secure=settings.session_cookie_secure,
     samesite=settings.SESSION_COOKIE_SAMESITE,
 )
+    response.delete_cookie(
+    key=settings.CSRF_COOKIE_NAME,
+    httponly=False,
+    secure=settings.session_cookie_secure,
+    samesite=settings.SESSION_COOKIE_SAMESITE,
+    )
 
     response.status_code = status.HTTP_204_NO_CONTENT
 

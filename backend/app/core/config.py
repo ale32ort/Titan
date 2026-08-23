@@ -33,6 +33,9 @@ class Settings(BaseSettings):
     SESSION_COOKIE_NAME: str = "titan_session"
     SESSION_COOKIE_SAMESITE: str = "lax"
 
+    CSRF_COOKIE_NAME: str = "titan_csrf"
+    CSRF_HEADER_NAME: str = "X-CSRF-Token"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         case_sensitive=True,

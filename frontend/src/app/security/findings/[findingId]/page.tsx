@@ -205,6 +205,38 @@ const timelineData =
     }
   }
 
+function getCookie(name: string): string | null {
+  const cookies = document.cookie.split(";");
+
+  for (const cookie of cookies) {
+    const [cookieName, ...valueParts] =
+      cookie.trim().split("=");
+
+    if (cookieName === name) {
+      return decodeURIComponent(
+        valueParts.join("=")
+      );
+    }
+  }
+
+  return null;
+}
+
+function getCsrfHeaders(): Record<string, string> {
+  const csrfToken =
+    getCookie("titan_csrf");
+
+  if (!csrfToken) {
+    throw new Error(
+      "CSRF token is missing. Please sign in again."
+    );
+  }
+
+  return {
+    "X-CSRF-Token": csrfToken,
+  };
+}
+
   async function addAnalystNote() {
     const content = newNote.trim();
 
@@ -223,6 +255,7 @@ const timelineData =
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
+            ...getCsrfHeaders(),
           },
           body: JSON.stringify({
             content,
@@ -265,10 +298,13 @@ const timelineData =
     const response = await fetch(
       `http://127.0.0.1:8001/api/v1/security/findings/${findingId}/assign-to-me`,
       {
-        method: "POST",
-        credentials: "include",
-      }
-    );
+  method: "POST",
+  credentials: "include",
+  headers: {
+    ...getCsrfHeaders(),
+  },
+}
+    )
 
     if (!response.ok) {
       throw new Error(
@@ -299,6 +335,9 @@ async function unassignFinding() {
       {
         method: "POST",
         credentials: "include",
+        headers: {
+          ...getCsrfHeaders(),
+        },
       }
     );
 
@@ -331,6 +370,9 @@ async function unassignFinding() {
         {
           method: "POST",
           credentials: "include",
+          headers: {
+            ...getCsrfHeaders(),
+          },
         }
       );
 
@@ -367,6 +409,7 @@ async function unassignFinding() {
           credentials: "include",
           headers: {
             "Content-Type": "application/json",
+            ...getCsrfHeaders(),
           },
           body: JSON.stringify({
             status: newStatus,
@@ -379,11 +422,21 @@ async function unassignFinding() {
           `Status update failed: ${response.status}`
         );
       }
-      await response.json();
-      await loadCase();
-
       const updatedFinding =
-        await response.json();
+  await response.json();
+
+setFinding((current) => {
+  if (!current) {
+    return current;
+  }
+
+  return {
+    ...current,
+    status: updatedFinding.status,
+  };
+});
+
+await loadCase();
 
       setFinding((current) => {
         if (!current) {

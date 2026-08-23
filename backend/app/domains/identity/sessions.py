@@ -1,19 +1,19 @@
 import hashlib
 import secrets
 from datetime import datetime, timedelta, timezone
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from app.domains.identity.models import User
-from app.core.config import settings
 
+from app.core.config import settings
+from app.domains.identity.models import User
 from app.domains.identity.session_models import UserSession
 
 
-
-
-
 def _hash_token(token: str) -> str:
-    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+    return hashlib.sha256(
+        token.encode("utf-8")
+    ).hexdigest()
 
 
 def create_session(
@@ -28,16 +28,40 @@ def create_session(
     session = UserSession(
         user_id=user_id,
         token_hash=token_hash,
-        expires_at=datetime.now(timezone.utc)
-+ timedelta(
-    hours=settings.SESSION_TTL_HOURS)
-),
+        expires_at=(
+            datetime.now(timezone.utc)
+            + timedelta(
+                hours=settings.SESSION_TTL_HOURS
+            )
+        ),
+    )
 
     db.add(session)
     db.commit()
     db.refresh(session)
 
     return session, raw_token
+
+
+def _as_utc_aware(
+    value: datetime,
+) -> datetime:
+    """
+    Normalize a database datetime to timezone-aware UTC.
+
+    Some database backends, including SQLite in tests,
+    may return timezone-naive datetime values even when
+    the SQLAlchemy column uses timezone=True.
+    """
+
+    if value.tzinfo is None:
+        return value.replace(
+            tzinfo=timezone.utc
+        )
+
+    return value.astimezone(
+        timezone.utc
+    )
 
 
 def get_session_by_token(
@@ -60,10 +84,17 @@ def get_session_by_token(
     if session.revoked_at is not None:
         return None
 
-    if session.expires_at <= datetime.now(timezone.utc):
+    expires_at = _as_utc_aware(
+        session.expires_at
+    )
+
+    if expires_at <= datetime.now(
+        timezone.utc
+    ):
         return None
 
     return session
+
 
 def get_user_by_session_token(
     db: Session,
@@ -93,6 +124,7 @@ def get_user_by_session_token(
 
     return user
 
+
 def revoke_session(
     db: Session,
     raw_token: str,
@@ -107,7 +139,9 @@ def revoke_session(
     if session is None:
         return False
 
-    session.revoked_at = datetime.now(timezone.utc)
+    session.revoked_at = datetime.now(
+        timezone.utc
+    )
 
     db.add(session)
     db.commit()
