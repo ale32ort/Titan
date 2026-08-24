@@ -19,6 +19,8 @@ class Settings(BaseSettings):
     API_PREFIX: str = "/api/v1"
     LOG_LEVEL: str = "INFO"
 
+    TRUSTED_PROXY_IPS: str = ""
+
     SECRET_KEY: str = "CHANGE_ME"
 
     DATABASE_URL: str = (

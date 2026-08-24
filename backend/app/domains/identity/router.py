@@ -32,7 +32,10 @@ from app.domains.identity.sessions import (
 )
 from app.domains.security.service import record_audit_event
 from app.domains.identity.csrf import create_csrf_token
-
+from app.domains.identity.rate_limit import (
+    login_rate_limiter,
+)
+from app.core.client_ip import get_client_ip
 
 router = APIRouter(
     prefix="/auth",
@@ -54,6 +57,9 @@ def register(
 
     try:
         user = register_user(db, payload)
+        ip_address = get_client_ip(
+        request
+    )
 
     except ValueError as exc:
         record_audit_event(
@@ -61,7 +67,7 @@ def register(
             event_type="USER_REGISTRATION_FAILED",
             result="failure",
             email=payload.email,
-            ip_address=request.client.host if request.client else None,
+            ip_address=ip_address,
             user_agent=request.headers.get("user-agent"),
         )
 
@@ -76,7 +82,7 @@ def register(
         result="success",
         user_id=user.id,
         email=user.email,
-        ip_address=request.client.host if request.client else None,
+        ip_address=ip_address,
         user_agent=request.headers.get("user-agent"),
     )
 
@@ -96,16 +102,50 @@ def login(
 ) -> LoginResponse:
     """Authenticate a user and create a server-managed session."""
 
+    ip_address = (
+        get_client_ip(request)
+        or "unknown"
+    )
+
+    is_limited, retry_after = (
+        login_rate_limiter.is_limited(
+            ip_address
+        )
+    )
+
+    if is_limited:
+        record_audit_event(
+            db,
+            event_type="LOGIN_RATE_LIMITED",
+            result="blocked",
+            email=payload.email,
+            ip_address=ip_address,
+            user_agent=request.headers.get(
+                "user-agent"
+            ),
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=(
+                "Too many login attempts. "
+                "Please try again later."
+            ),
+            headers={
+                "Retry-After": str(
+                    retry_after
+                )
+            },
+        )
+
     user = authenticate_user(
         db,
         payload,
     )
 
     if user is None:
-        ip_address = (
-            request.client.host
-            if request.client
-            else None
+        login_rate_limiter.record_failure(
+            ip_address
         )
 
         record_audit_event(
@@ -223,6 +263,10 @@ def logout(
 
     user = None
 
+    ip_address = get_client_ip(
+        request
+    )
+
     if titan_session is not None:
         user = get_user_by_session_token(
             db,
@@ -240,7 +284,7 @@ def logout(
         result="success",
         user_id=user.id if user else None,
         email=user.email if user else None,
-        ip_address=request.client.host if request.client else None,
+        ip_address=ip_address,
         user_agent=request.headers.get("user-agent"),
     )
 
