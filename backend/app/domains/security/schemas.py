@@ -1,11 +1,7 @@
 from datetime import datetime
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
-
-from typing import Literal
-
-from pydantic import BaseModel
 
 
 class AITriageOutputPublic(BaseModel):
@@ -15,7 +11,11 @@ class AITriageOutputPublic(BaseModel):
     hypotheses: list[str]
     missing_context: list[str]
     recommended_actions: list[str]
-    confidence: Literal["low", "medium", "high"]
+    confidence: Literal[
+        "low",
+        "medium",
+        "high",
+    ]
     compromise_status: Literal[
         "not_established",
         "suspected",
@@ -32,7 +32,9 @@ class AITriageResponse(BaseModel):
 
 
 class AuditEventEvidencePublic(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
     id: str
     event_type: str
@@ -58,7 +60,9 @@ class DetectionRulePublic(BaseModel):
 
 
 class SecurityFindingPublic(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
     id: str
     finding_type: str
@@ -72,14 +76,20 @@ class SecurityFindingPublic(BaseModel):
     assigned_to_user_id: str | None = None
 
 
-class SecurityFindingDetail(SecurityFindingPublic):
+class SecurityFindingDetail(
+    SecurityFindingPublic
+):
     rule: DetectionRulePublic | None
     evidence_count: int
-    evidence: list[AuditEventEvidencePublic]
+    evidence: list[
+        AuditEventEvidencePublic
+    ]
     assigned_to_user_id: str | None = None
 
 
-class SecurityFindingStatusUpdate(BaseModel):
+class SecurityFindingStatusUpdate(
+    BaseModel
+):
     status: str
 
 
@@ -97,7 +107,11 @@ class AITriageRunPublic(BaseModel):
     missing_context: list[str]
     recommended_actions: list[str]
 
-    confidence: Literal["low", "medium", "high"]
+    confidence: Literal[
+        "low",
+        "medium",
+        "high",
+    ]
 
     compromise_status: Literal[
         "not_established",
@@ -109,7 +123,10 @@ class AITriageRunPublic(BaseModel):
 
     created_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
 
 class AnalystNoteCreate(BaseModel):
     content: str
@@ -126,6 +143,7 @@ class AnalystNotePublic(BaseModel):
         from_attributes=True
     )
 
+
 class CaseTimelineItem(BaseModel):
     event_type: str
     title: str
@@ -135,3 +153,56 @@ class CaseTimelineItem(BaseModel):
     metadata: dict = Field(
         default_factory=dict
     )
+
+
+class SensorEventIngest(BaseModel):
+    source: Literal[
+        "suricata",
+        "sysmon",
+    ]
+
+    event_type: str = Field(
+        min_length=1,
+        max_length=100,
+    )
+
+    host: str | None = Field(
+        default=None,
+        max_length=255,
+    )
+
+    source_ip: str | None = Field(
+        default=None,
+        max_length=45,
+    )
+
+    destination_ip: str | None = Field(
+        default=None,
+        max_length=45,
+    )
+
+    severity: str | None = Field(
+        default=None,
+        max_length=20,
+    )
+
+    message: str | None = Field(
+        default=None,
+        max_length=2000,
+    )
+
+    observed_at: datetime | None = None
+
+    metadata: dict[str, Any] = Field(
+        default_factory=dict
+    )
+
+
+class SensorEventIngestResponse(
+    BaseModel
+):
+    event_id: str
+    source: str
+    event_type: str
+    status: Literal["accepted"]
+    created_at: datetime

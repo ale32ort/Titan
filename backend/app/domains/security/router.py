@@ -19,7 +19,9 @@ from app.domains.security.schemas import (
     SecurityFindingStatusUpdate,
     AnalystNoteCreate,
     AnalystNotePublic,
-    CaseTimelineItem
+    CaseTimelineItem,
+    SensorEventIngest,
+SensorEventIngestResponse,
 )
 from app.domains.security.service import record_audit_event
 from app.domains.security.ai_triage_record_service import (
@@ -38,11 +40,48 @@ from app.domains.security.timeline import (
     build_case_timeline,
 )
 from app.domains.identity.csrf import require_csrf_token
+from app.domains.security.ingestion_auth import (
+    require_sensor_api_key,
+)
+
+from app.domains.security.ingestion_service import (
+    ingest_sensor_event,
+)
 
 router = APIRouter(
     prefix="/security",
     tags=["security"],
 )
+
+@router.post(
+    "/ingest/events",
+    response_model=SensorEventIngestResponse,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+def ingest_security_event(
+    payload: SensorEventIngest,
+    sensor_authenticated: None = Depends(
+        require_sensor_api_key
+    ),
+    db: Session = Depends(get_db),
+) -> SensorEventIngestResponse:
+    """
+    Accept normalized telemetry from an
+    authenticated Titan sensor.
+    """
+
+    event = ingest_sensor_event(
+        db,
+        payload=payload,
+    )
+
+    return SensorEventIngestResponse(
+        event_id=event.id,
+        source=payload.source,
+        event_type=event.event_type,
+        status="accepted",
+        created_at=event.created_at,
+    )
 
 
 @router.get(

@@ -23,6 +23,9 @@ class Settings(BaseSettings):
 
     SECRET_KEY: str = "CHANGE_ME"
 
+    SENSOR_INGEST_API_KEY: str = "CHANGE_ME"
+    SENSOR_INGEST_HEADER_NAME: str = "X-Titan-Sensor-Key"
+
     DATABASE_URL: str = (
         "postgresql+psycopg://"
         "titan:titan@localhost:5432/titan"
@@ -65,10 +68,6 @@ class Settings(BaseSettings):
     def validate_security_configuration(
         self,
     ) -> "Settings":
-        """
-        Refuse obviously unsafe configuration in production.
-        """
-
         if not self.is_production:
             return self
 
@@ -78,14 +77,28 @@ class Settings(BaseSettings):
             "replace_with_secure_secret",
         }
 
-        if self.SECRET_KEY.strip() in unsafe_secrets:
+        if (
+            self.SECRET_KEY.strip()
+            in unsafe_secrets
+        ):
             raise ValueError(
-                "Production requires a secure SECRET_KEY."
+                "Production requires a secure "
+                "SECRET_KEY."
+            )
+
+        if (
+            self.SENSOR_INGEST_API_KEY.strip()
+            in unsafe_secrets
+        ):
+            raise ValueError(
+                "Production requires a secure "
+                "SENSOR_INGEST_API_KEY."
             )
 
         if self.DEBUG:
             raise ValueError(
-                "DEBUG must be disabled in production."
+                "DEBUG must be disabled "
+                "in production."
             )
 
         return self
