@@ -62,11 +62,40 @@ AUTH_003 = DetectionRule(
     mitre_technique_name="Brute Force",
 )
 
+NET_001 = DetectionRule(
+    rule_id="NET-001",
+    name="Network Reconnaissance Detected",
+    description=(
+        "Detects Suricata alerts that indicate "
+        "network reconnaissance or scanning activity."
+    ),
+    severity="medium",
+    mitre_tactic="Discovery",
+    mitre_technique_id="T1046",
+    mitre_technique_name="Network Service Discovery",
+)
+
+ENDPOINT_001 = DetectionRule(
+    rule_id="ENDPOINT-001",
+    name="Suspicious PowerShell Execution",
+    description=(
+        "Detects Sysmon process creation events "
+        "containing suspicious PowerShell execution patterns."
+    ),
+    severity="high",
+    mitre_tactic="Execution",
+    mitre_technique_id="T1059.001",
+    mitre_technique_name="PowerShell",
+)
+
 DETECTION_RULES = {
     AUTH_001.rule_id: AUTH_001,
     AUTH_002.rule_id: AUTH_002,
     AUTH_003.rule_id: AUTH_003,
+    NET_001.rule_id: NET_001,
+    ENDPOINT_001.rule_id: ENDPOINT_001,
 }
+
 
 
 def get_detection_rule(

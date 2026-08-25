@@ -1,7 +1,11 @@
 from datetime import datetime, timezone
-
+from app.domains.security.detections.network import (
+    detect_network_reconnaissance,
+)
 from sqlalchemy.orm import Session
-
+from app.domains.security.detections.endpoint import (
+    detect_suspicious_powershell,
+)
 from app.domains.security.models import AuditEvent
 from app.domains.security.schemas import (
     SensorEventIngest,
@@ -61,5 +65,15 @@ def ingest_sensor_event(
     db.add(event)
     db.commit()
     db.refresh(event)
+
+    detect_network_reconnaissance(
+    db,
+    event_id=event.id,
+)
+
+    detect_suspicious_powershell(
+    db,
+    event_id=event.id,
+)
 
     return event
