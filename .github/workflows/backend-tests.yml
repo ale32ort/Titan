@@ -24,7 +24,7 @@ jobs:
       SECRET_KEY: ci-test-secret-key
       SENSOR_INGEST_API_KEY: ci-test-sensor-key
 
-      DATABASE_URL: sqlite+pysqlite:///:memory:
+      DATABASE_URL: "sqlite+pysqlite:///:memory:"
 
       ANTHROPIC_API_KEY: ""
       ANTHROPIC_MODEL: claude-sonnet-5
