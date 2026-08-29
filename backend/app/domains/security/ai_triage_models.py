@@ -1,14 +1,38 @@
 from datetime import datetime, timezone
 from uuid import uuid4
 
-from sqlalchemy import JSON, DateTime, ForeignKey, String, Text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import (
+    JSON,
+    DateTime,
+    ForeignKey,
+    Index,
+    String,
+    Text,
+    text,
+)
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+)
 
 from app.db.base import Base
 
 
 class AITriageRecord(Base):
     __tablename__ = "ai_triage_runs"
+    __table_args__ = (
+        Index(
+            "uq_ai_triage_runs_one_running_per_finding",
+            "finding_id",
+            unique=True,
+            postgresql_where=text(
+                "status = 'running'"
+            ),
+            sqlite_where=text(
+                "status = 'running'"
+            ),
+        ),
+    )
 
     id: Mapped[str] = mapped_column(
         String(36),
@@ -25,7 +49,9 @@ class AITriageRecord(Base):
         nullable=False,
     )
 
-    requested_by_user_id: Mapped[str | None] = mapped_column(
+    requested_by_user_id: Mapped[
+        str | None
+    ] = mapped_column(
         String(36),
         nullable=True,
         index=True,
@@ -41,54 +67,104 @@ class AITriageRecord(Base):
         nullable=False,
     )
 
-    executive_summary: Mapped[str] = mapped_column(
-        Text,
-        nullable=False,
-    )
-
-    analyst_assessment: Mapped[str] = mapped_column(
-        Text,
-        nullable=False,
-    )
-
-    confirmed_facts: Mapped[list] = mapped_column(
-        JSON,
-        nullable=False,
-    )
-
-    hypotheses: Mapped[list] = mapped_column(
-        JSON,
-        nullable=False,
-    )
-
-    missing_context: Mapped[list] = mapped_column(
-        JSON,
-        nullable=False,
-    )
-
-    recommended_actions: Mapped[list] = mapped_column(
-        JSON,
-        nullable=False,
-    )
-
-    confidence: Mapped[str] = mapped_column(
+    status: Mapped[str] = mapped_column(
         String(20),
         nullable=False,
+        default="running",
+        index=True,
     )
 
-    compromise_status: Mapped[str] = mapped_column(
+    error_type: Mapped[
+        str | None
+    ] = mapped_column(
+        String(100),
+        nullable=True,
+    )
+
+    error_message: Mapped[
+        str | None
+    ] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    executive_summary: Mapped[
+        str | None
+    ] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    analyst_assessment: Mapped[
+        str | None
+    ] = mapped_column(
+        Text,
+        nullable=True,
+    )
+
+    confirmed_facts: Mapped[
+        list | None
+    ] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+
+    hypotheses: Mapped[
+        list | None
+    ] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+
+    missing_context: Mapped[
+        list | None
+    ] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+
+    recommended_actions: Mapped[
+        list | None
+    ] = mapped_column(
+        JSON,
+        nullable=True,
+    )
+
+    confidence: Mapped[
+        str | None
+    ] = mapped_column(
+        String(20),
+        nullable=True,
+    )
+
+    compromise_status: Mapped[
+        str | None
+    ] = mapped_column(
         String(30),
-        nullable=False,
+        nullable=True,
     )
 
-    grounding_corrections: Mapped[list] = mapped_column(
+    grounding_corrections: Mapped[
+        list
+    ] = mapped_column(
         JSON,
         nullable=False,
         default=list,
     )
 
-    created_at: Mapped[datetime] = mapped_column(
+    created_at: Mapped[
+        datetime
+    ] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(
+            timezone.utc
+        ),
         nullable=False,
+    )
+
+    completed_at: Mapped[
+        datetime | None
+    ] = mapped_column(
+        DateTime(timezone=True),
+        nullable=True,
     )

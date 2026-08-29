@@ -30,6 +30,7 @@ from app.domains.security.ai_triage_record_service import (
 from app.domains.security.ai_triage_record_service import (
     get_ai_triage_record,
     get_ai_triage_records_for_finding,
+    AITriageAlreadyRunningError,
 )
 from app.domains.security.analyst_note_service import (
     create_analyst_note,
@@ -267,6 +268,15 @@ def triage_security_finding(
             ai_client=ai_client,
             requested_by_user_id=current_user.id,
         )
+
+    except AITriageAlreadyRunningError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=(
+                "An AI investigation is already "
+                "running for this finding."
+            ),
+        ) from exc
 
     except Exception as exc:
         raise HTTPException(
