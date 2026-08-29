@@ -1,0 +1,62 @@
+name: Backend Tests
+
+on:
+  push:
+    branches:
+      - main
+
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    env:
+      ENVIRONMENT: test
+      DEBUG: "False"
+
+      SECRET_KEY: ci-test-secret-key
+      SENSOR_INGEST_API_KEY: ci-test-sensor-key
+
+      DATABASE_URL: sqlite+pysqlite:///:memory:
+
+      ANTHROPIC_API_KEY: ""
+      ANTHROPIC_MODEL: claude-sonnet-5
+
+      SESSION_TTL_HOURS: "12"
+      SESSION_COOKIE_NAME: titan_session
+      SESSION_COOKIE_SAMESITE: lax
+
+      CSRF_COOKIE_NAME: titan_csrf
+      CSRF_HEADER_NAME: X-CSRF-Token
+
+      TRUSTED_PROXY_IPS: ""
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements.txt
+            backend/requirements-dev.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -r requirements-dev.txt
+
+      - name: Run backend test suite
+        run: |
+          python -m pytest -q
