@@ -1,3 +1,32 @@
+import os
+
+# ---------------------------------------------------------
+# Test-only configuration
+#
+# These values must be established before Titan modules are
+# imported so pytest never loads real development secrets
+# from backend/.env.
+# ---------------------------------------------------------
+
+os.environ["ENVIRONMENT"] = "test"
+os.environ["DEBUG"] = "False"
+
+os.environ["SECRET_KEY"] = (
+    "pytest-secret-key-not-for-production"
+)
+
+os.environ["SENSOR_INGEST_API_KEY"] = (
+    "pytest-sensor-key"
+)
+
+os.environ["DATABASE_URL"] = (
+    "sqlite+pysqlite:///:memory:"
+)
+
+os.environ["ANTHROPIC_API_KEY"] = ""
+os.environ["ANTHROPIC_MODEL"] = (
+    "claude-sonnet-5"
+)
 from collections.abc import Generator
 from datetime import datetime, timezone
 

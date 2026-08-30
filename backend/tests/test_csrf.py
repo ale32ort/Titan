@@ -99,14 +99,18 @@ def test_csrf_protected_route_accepts_valid_token():
     )
 
     with TestClient(app) as client:
+        client.cookies.set(
+            settings.SESSION_COOKIE_NAME,
+            session_token,
+        )
+
+        client.cookies.set(
+            settings.CSRF_COOKIE_NAME,
+            csrf_token,
+        )
+
         response = client.post(
             "/protected",
-            cookies={
-                settings.SESSION_COOKIE_NAME:
-                    session_token,
-                settings.CSRF_COOKIE_NAME:
-                    csrf_token,
-            },
             headers={
                 settings.CSRF_HEADER_NAME:
                     csrf_token,
@@ -119,7 +123,6 @@ def test_csrf_protected_route_accepts_valid_token():
         "status": "allowed"
     }
 
-
 def test_csrf_protected_route_rejects_wrong_header():
     app = create_csrf_test_app()
 
@@ -130,14 +133,18 @@ def test_csrf_protected_route_rejects_wrong_header():
     )
 
     with TestClient(app) as client:
+        client.cookies.set(
+            settings.SESSION_COOKIE_NAME,
+            session_token,
+        )
+
+        client.cookies.set(
+            settings.CSRF_COOKIE_NAME,
+            csrf_token,
+        )
+
         response = client.post(
             "/protected",
-            cookies={
-                settings.SESSION_COOKIE_NAME:
-                    session_token,
-                settings.CSRF_COOKIE_NAME:
-                    csrf_token,
-            },
             headers={
                 settings.CSRF_HEADER_NAME:
                     "tampered-token",

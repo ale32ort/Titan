@@ -1,6 +1,5 @@
 from fastapi import (
     APIRouter,
-    Cookie,
     Depends,
     HTTPException,
     Request,
@@ -31,7 +30,9 @@ from app.domains.identity.sessions import (
     revoke_session,
 )
 from app.domains.security.service import record_audit_event
-from app.domains.identity.csrf import create_csrf_token
+from app.domains.identity.csrf import (
+create_csrf_token, require_csrf_token,
+)
 from app.domains.identity.rate_limit import (
     login_rate_limiter,
 )
@@ -256,10 +257,26 @@ def get_current_user(
 def logout(
     request: Request,
     response: Response,
-    titan_session: str | None = Cookie(default=None),
+    csrf_valid: None = Depends(
+        require_csrf_token
+    ),
     db: Session = Depends(get_db),
 ) -> Response:
-    """Revoke the current session and remove its browser cookie."""
+    """
+    Revoke the current session and remove
+    its browser authentication cookies.
+
+    Logout changes server-side authentication
+    state, so it requires a valid CSRF token.
+    """
+
+    del csrf_valid
+
+    raw_session_token = (
+        request.cookies.get(
+            settings.SESSION_COOKIE_NAME
+        )
+    )
 
     user = None
 
@@ -267,40 +284,61 @@ def logout(
         request
     )
 
-    if titan_session is not None:
+    if raw_session_token is not None:
         user = get_user_by_session_token(
             db,
-            titan_session,
+            raw_session_token,
         )
 
         revoke_session(
             db,
-            titan_session,
+            raw_session_token,
         )
 
     record_audit_event(
         db,
         event_type="LOGOUT",
         result="success",
-        user_id=user.id if user else None,
-        email=user.email if user else None,
+        user_id=(
+            user.id
+            if user
+            else None
+        ),
+        email=(
+            user.email
+            if user
+            else None
+        ),
         ip_address=ip_address,
-        user_agent=request.headers.get("user-agent"),
+        user_agent=request.headers.get(
+            "user-agent"
+        ),
     )
 
     response.delete_cookie(
-    key=settings.SESSION_COOKIE_NAME,
-    httponly=True,
-    secure=settings.session_cookie_secure,
-    samesite=settings.SESSION_COOKIE_SAMESITE,
-)
-    response.delete_cookie(
-    key=settings.CSRF_COOKIE_NAME,
-    httponly=False,
-    secure=settings.session_cookie_secure,
-    samesite=settings.SESSION_COOKIE_SAMESITE,
+        key=settings.SESSION_COOKIE_NAME,
+        httponly=True,
+        secure=(
+            settings.session_cookie_secure
+        ),
+        samesite=(
+            settings.SESSION_COOKIE_SAMESITE
+        ),
     )
 
-    response.status_code = status.HTTP_204_NO_CONTENT
+    response.delete_cookie(
+        key=settings.CSRF_COOKIE_NAME,
+        httponly=False,
+        secure=(
+            settings.session_cookie_secure
+        ),
+        samesite=(
+            settings.SESSION_COOKIE_SAMESITE
+        ),
+    )
+
+    response.status_code = (
+        status.HTTP_204_NO_CONTENT
+    )
 
     return response

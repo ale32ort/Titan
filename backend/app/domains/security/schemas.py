@@ -100,28 +100,38 @@ class AITriageRunPublic(BaseModel):
     provider: str
     model: str
 
-    executive_summary: str
-    analyst_assessment: str
-    confirmed_facts: list[str]
-    hypotheses: list[str]
-    missing_context: list[str]
-    recommended_actions: list[str]
+    status: Literal[
+        "running",
+        "completed",
+        "failed",
+    ]
+
+    error_type: str | None = None
+    error_message: str | None = None
+
+    executive_summary: str | None = None
+    analyst_assessment: str | None = None
+    confirmed_facts: list[str] | None = None
+    hypotheses: list[str] | None = None
+    missing_context: list[str] | None = None
+    recommended_actions: list[str] | None = None
 
     confidence: Literal[
         "low",
         "medium",
         "high",
-    ]
+    ] | None = None
 
     compromise_status: Literal[
         "not_established",
         "suspected",
         "confirmed",
-    ]
+    ] | None = None
 
-    grounding_corrections: list[str]
+    grounding_corrections: list[str] | None = None
 
     created_at: datetime
+    completed_at: datetime | None = None
 
     model_config = ConfigDict(
         from_attributes=True
@@ -129,7 +139,7 @@ class AITriageRunPublic(BaseModel):
 
 
 class AnalystNoteCreate(BaseModel):
-    content: str
+  content: str
 
 
 class AnalystNotePublic(BaseModel):
@@ -138,11 +148,6 @@ class AnalystNotePublic(BaseModel):
     author_user_id: str
     content: str
     created_at: datetime
-
-    model_config = ConfigDict(
-        from_attributes=True
-    )
-
 
 class CaseTimelineItem(BaseModel):
     event_type: str

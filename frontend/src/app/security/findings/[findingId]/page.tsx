@@ -33,19 +33,31 @@ type TriageRun = {
   requested_by_user_id: string | null;
   provider: string;
   model: string;
-  executive_summary: string;
-  analyst_assessment: string;
-  confirmed_facts: string[];
-  hypotheses: string[];
-  missing_context: string[];
-  recommended_actions: string[];
-  confidence: "low" | "medium" | "high";
+
+  status: "running" | "completed" | "failed";
+
+  error_type: string | null;
+  error_message: string | null;
+
+  executive_summary: string | null;
+  analyst_assessment: string | null;
+  confirmed_facts: string[] | null;
+  hypotheses: string[] | null;
+  missing_context: string[] | null;
+  recommended_actions: string[] | null;
+
+  confidence: "low" | "medium" | "high" | null;
+
   compromise_status:
     | "not_established"
     | "suspected"
-    | "confirmed";
-  grounding_corrections: string[];
+    | "confirmed"
+    | null;
+
+  grounding_corrections: string[] | null;
+
   created_at: string;
+  completed_at: string | null;
 };
 
 type FindingDetail = {
@@ -681,9 +693,13 @@ const timelineData =
           <MetricCard
             label="Compromise"
             value={
-              latestRun
-                ? latestRun.compromise_status
-                : "Not triaged"
+              !latestRun
+                ? "Not triaged"
+                : latestRun.status === "running"
+                  ? "Triage running"
+                  : latestRun.status === "failed"
+                    ? "AI run failed"
+                    : latestRun.compromise_status ?? "Not established"
             }
           />
         </section>
@@ -890,9 +906,7 @@ const timelineData =
 
               <span className="rounded-full border border-slate-700 px-3 py-1 text-xs text-slate-400">
                 {triageRuns.length} run
-                {triageRuns.length === 1
-                  ? ""
-                  : "s"}
+                {triageRuns.length === 1 ? "" : "s"}
               </span>
             </div>
 
@@ -902,108 +916,125 @@ const timelineData =
               </div>
             ) : (
               <div className="space-y-6">
-                {triageRuns.map(
-                  (run, index) => (
-                    <article
-                      key={run.id}
-                      className="rounded-xl border border-slate-800 bg-slate-950/60 p-5"
-                    >
-                      <div className="mb-5 flex flex-col gap-3 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-semibold">
-                              {run.model}
-                            </h3>
+                {triageRuns.map((run, index) => (
+                  <article
+                    key={run.id}
+                    className="rounded-xl border border-slate-800 bg-slate-950/60 p-5"
+                  >
+                    <div className="mb-5 flex flex-col gap-3 border-b border-slate-800 pb-4 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold">{run.model}</h3>
 
-                            {index === 0 && (
-                              <span className="rounded-full bg-slate-800 px-2 py-1 text-xs">
-                                Latest
-                              </span>
-                            )}
-                          </div>
-
-                          <p className="mt-1 text-xs text-slate-500">
-                            {new Date(
-                              run.created_at
-                            ).toLocaleString()}
-                          </p>
+                          {index === 0 && (
+                            <span className="rounded-full bg-slate-800 px-2 py-1 text-xs">
+                              Latest
+                            </span>
+                          )}
                         </div>
 
-                        <div className="flex gap-2 text-xs">
-                          <Badge>
-                            Confidence:{" "}
-                            {run.confidence}
-                          </Badge>
-
-                          <Badge>
-                            {run.compromise_status}
-                          </Badge>
-                        </div>
+                        <p className="mt-1 text-xs text-slate-500">
+                          {new Date(run.created_at).toLocaleString()}
+                        </p>
                       </div>
 
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        <Badge>Status: {run.status}</Badge>
+
+                        {run.status === "completed" && run.confidence && (
+                          <Badge>Confidence: {run.confidence}</Badge>
+                        )}
+
+                        {run.status === "completed" &&
+                          run.compromise_status && (
+                            <Badge>{run.compromise_status}</Badge>
+                          )}
+                      </div>
+                    </div>
+
+                    {run.status === "failed" ? (
+                      <div className="rounded-lg border border-red-900/70 bg-red-950/20 p-4">
+                        <h4 className="font-medium text-red-300">
+                          AI investigation failed
+                        </h4>
+
+                        <p className="mt-2 text-sm text-red-200/80">
+                          {run.error_type ?? "AI provider error"}
+                        </p>
+
+                        {run.error_message && (
+                          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-400">
+                            {run.error_message}
+                          </p>
+                        )}
+
+                        {run.completed_at && (
+                          <p className="mt-3 text-xs text-slate-600">
+                            Finished{" "}
+                            {new Date(run.completed_at).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    ) : run.status === "running" ? (
+                      <div className="rounded-lg border border-slate-700 bg-slate-900/60 p-4">
+                        <h4 className="font-medium text-slate-200">
+                          AI investigation is running
+                        </h4>
+
+                        <p className="mt-2 text-sm text-slate-400">
+                          Titan has created the investigation record and is
+                          waiting for the AI provider to finish.
+                        </p>
+                      </div>
+                    ) : (
                       <div className="space-y-6">
                         <SectionBlock
                           title="Executive Summary"
                           text={
-                            run.executive_summary
+                            run.executive_summary ??
+                            "No executive summary returned."
                           }
                         />
 
                         <SectionBlock
                           title="Analyst Assessment"
                           text={
-                            run.analyst_assessment
+                            run.analyst_assessment ??
+                            "No analyst assessment returned."
                           }
                         />
 
                         <StringList
                           title="Confirmed Facts"
-                          items={
-                            run.confirmed_facts
-                          }
+                          items={run.confirmed_facts ?? []}
                         />
 
                         <StringList
                           title="Hypotheses"
-                          items={
-                            run.hypotheses
-                          }
+                          items={run.hypotheses ?? []}
                         />
 
                         <StringList
                           title="Missing Context"
-                          items={
-                            run.missing_context
-                          }
+                          items={run.missing_context ?? []}
                         />
 
                         <StringList
                           title="Recommended Actions"
-                          items={
-                            run.recommended_actions
-                          }
+                          items={run.recommended_actions ?? []}
                         />
 
-                        {run
-                          .grounding_corrections
-                          .length > 0 && (
+                        {(run.grounding_corrections?.length ?? 0) > 0 && (
                           <div className="rounded-lg border border-amber-900/70 bg-amber-950/20 p-4">
                             <p className="font-medium text-amber-300">
                               Titan Grounding Corrections
                             </p>
 
                             <ul className="mt-3 space-y-2 text-sm text-amber-100/80">
-                              {run.grounding_corrections.map(
-                                (
-                                  correction
-                                ) => (
-                                  <li
-                                    key={
-                                      correction
-                                    }
-                                  >
-                                    •{" "}
-                                    {correction}
+                              {(run.grounding_corrections ?? []).map(
+                                (correction) => (
+                                  <li key={correction}>
+                                    • {correction}
                                   </li>
                                 )
                               )}
@@ -1011,9 +1042,9 @@ const timelineData =
                           </div>
                         )}
                       </div>
-                    </article>
-                  )
-                )}
+                    )}
+                  </article>
+                ))}
               </div>
             )}
           </section>
@@ -1100,7 +1131,7 @@ const timelineData =
               )}
             </div>
           )}
-        </section> 
+        </section>
         <section className="mt-8 rounded-xl border border-slate-800 bg-slate-900/50 p-6">
   <div className="mb-6">
     <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
