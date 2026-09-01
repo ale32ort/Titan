@@ -2,19 +2,15 @@
 
 # 
 
-# \*\*Evidence-driven, AI-assisted security operations and investigation platform.\*\*
+# > \*\*Evidence-driven, AI-assisted security operations and investigation platform\*\*
 
 # 
 
-# Titan is an independent cybersecurity engineering project I built to understand how modern security operations systems work end-to-end: from telemetry collection and detection through evidence preservation, AI-assisted triage, analyst workflow, and secure infrastructure.
+# Titan is an independent cybersecurity engineering project built to explore how modern security operations work end-to-end: from telemetry collection and deterministic detection to evidence preservation, AI-assisted triage, analyst workflow, and infrastructure hardening.
 
 # 
 
-# The project combines live network and endpoint telemetry with deterministic detections, evidence-backed investigations, controlled AI reasoning, and a browser-based analyst interface.
-
-# 
-
-# > Titan is a portfolio and engineering project, not a production enterprise SIEM or a replacement for platforms such as Splunk or Elasticsearch.
+# > \*\*Scope:\*\* Titan is a portfolio and engineering project, not a production enterprise SIEM or a replacement for Splunk or Elasticsearch.
 
 # 
 
@@ -22,199 +18,57 @@
 
 # 
 
-# \## Why I Built Titan
+# \## What Titan Does
 
 # 
 
-# I wanted to move beyond studying cybersecurity concepts in isolation and build a system where I could understand how the pieces of a real security operations workflow connect.
+# Titan combines live \*\*network\*\* and \*\*endpoint\*\* telemetry with deterministic detections, evidence-backed security findings, grounded AI analysis, and a browser-based analyst workflow.
 
 # 
 
-# Titan gave me hands-on experience with:
-
-# 
-
-# \- security telemetry collection
-
-# \- endpoint and network monitoring
-
-# \- detection engineering
-
-# \- event normalization
-
-# \- evidence preservation
-
-# \- case management
-
-# \- API security
-
-# \- authentication and RBAC
-
-# \- AI-assisted investigation
-
-# \- AI grounding and failure handling
-
-# \- infrastructure hardening
-
-# \- automated testing and CI
-
-# 
-
-# The goal was not simply to make alerts appear on a dashboard. I wanted to understand how security data moves from a sensor all the way to an analyst decision.
-
-# 
-
-# \---
-
-# 
-
-# \# Architecture
+# \### Data Flow
 
 # 
 
 # ```text
 
-# &#x20;                        TITAN SECURITY OPERATIONS
+# Suricata / Sysmon
 
-# 
+# &#x20;       ↓
 
-# &#x20; ┌───────────────────────────────────────────────────────────────┐
+# Winlogbeat / Elasticsearch
 
-# &#x20; │                       TELEMETRY SOURCES                       │
+# &#x20;       ↓
 
-# &#x20; │                                                               │
+# Titan Sensor Bridges
 
-# &#x20; │   Raspberry Pi / Suricata          Windows / Sysmon           │
+# &#x20;       ↓
 
-# &#x20; │      Network telemetry             Endpoint telemetry         │
+# Authenticated FastAPI Ingestion
 
-# &#x20; └───────────────┬───────────────────────────┬───────────────────┘
+# &#x20;       ↓
 
-# &#x20;                 │                           │
+# Normalized Security Events
 
-# &#x20;                 ▼                           ▼
+# &#x20;       ↓
 
-# &#x20;      ┌───────────────────┐        ┌──────────────────────┐
+# Deterministic Detection
 
-# &#x20;      │ Suricata eve.json │        │ Winlogbeat / Elastic │
+# &#x20;       ↓
 
-# &#x20;      └─────────┬─────────┘        └──────────┬───────────┘
+# Security Finding + Exact Evidence
 
-# &#x20;                │                             │
+# &#x20;       ↓
 
-# &#x20;                ▼                             ▼
+# Deterministic Triage + Claude
 
-# &#x20;      ┌──────────────────────────────────────────────────┐
+# &#x20;       ↓
 
-# &#x20;      │              Titan Sensor Bridges                │
+# Titan Grounding Policy
 
-# &#x20;      │                                                  │
+# &#x20;       ↓
 
-# &#x20;      │  Normalization + authenticated machine ingest    │
-
-# &#x20;      └───────────────────────┬──────────────────────────┘
-
-# &#x20;                              │
-
-# &#x20;                              ▼
-
-# &#x20;      ┌──────────────────────────────────────────────────┐
-
-# &#x20;      │             FastAPI Ingestion Gateway            │
-
-# &#x20;      │                                                  │
-
-# &#x20;      │       POST /api/v1/security/ingest/events        │
-
-# &#x20;      └───────────────────────┬──────────────────────────┘
-
-# &#x20;                              │
-
-# &#x20;                              ▼
-
-# &#x20;      ┌──────────────────────────────────────────────────┐
-
-# &#x20;      │             Canonical Security Events            │
-
-# &#x20;      │                                                  │
-
-# &#x20;      │       AuditEvent + normalized metadata           │
-
-# &#x20;      └───────────────────────┬──────────────────────────┘
-
-# &#x20;                              │
-
-# &#x20;                              ▼
-
-# &#x20;      ┌──────────────────────────────────────────────────┐
-
-# &#x20;      │             Deterministic Detection              │
-
-# &#x20;      │                                                  │
-
-# &#x20;      │ Authentication | Network | Endpoint detections   │
-
-# &#x20;      └───────────────────────┬──────────────────────────┘
-
-# &#x20;                              │
-
-# &#x20;                              ▼
-
-# &#x20;      ┌──────────────────────────────────────────────────┐
-
-# &#x20;      │               Security Finding                   │
-
-# &#x20;      │                                                  │
-
-# &#x20;      │      Finding + exact supporting evidence         │
-
-# &#x20;      └───────────────────────┬──────────────────────────┘
-
-# &#x20;                              │
-
-# &#x20;                   ┌──────────┴──────────┐
-
-# &#x20;                   ▼                     ▼
-
-# &#x20;      ┌──────────────────────┐  ┌────────────────────────┐
-
-# &#x20;      │ Deterministic Triage │  │ Claude AI Triage       │
-
-# &#x20;      │                      │  │                        │
-
-# &#x20;      │ Known security facts │  │ Structured reasoning   │
-
-# &#x20;      └──────────┬───────────┘  └───────────┬────────────┘
-
-# &#x20;                 │                          │
-
-# &#x20;                 └────────────┬─────────────┘
-
-# &#x20;                              ▼
-
-# &#x20;      ┌──────────────────────────────────────────────────┐
-
-# &#x20;      │              Titan Grounding Policy              │
-
-# &#x20;      │                                                  │
-
-# &#x20;      │ Evidence > deterministic facts > AI conclusions  │
-
-# &#x20;      └───────────────────────┬──────────────────────────┘
-
-# &#x20;                              │
-
-# &#x20;                              ▼
-
-# &#x20;      ┌──────────────────────────────────────────────────┐
-
-# &#x20;      │               Analyst Case View                  │
-
-# &#x20;      │                                                  │
-
-# &#x20;      │ Evidence | AI history | notes | status | owner   │
-
-# &#x20;      └──────────────────────────────────────────────────┘
+# Analyst Case View
 
 # ```
 
@@ -224,43 +78,29 @@
 
 # 
 
-# \# Security Telemetry
+# \## Architecture
 
 # 
 
-# \## Network
+# \### Telemetry
 
 # 
 
-# Titan receives network-security alerts generated by \*\*Suricata\*\* running on a Raspberry Pi sensor.
+# \*\*Network\*\*
+
+# \- Raspberry Pi sensor
+
+# \- Suricata
+
+# \- `eve.json`
+
+# \- authenticated Titan sensor bridge
 
 # 
 
-# The Suricata bridge:
+# \*\*Endpoint\*\*
 
-# 
-
-# 1\. reads structured events from `eve.json`
-
-# 2\. extracts relevant alert information
-
-# 3\. converts the event into Titan's normalized sensor format
-
-# 4\. authenticates to Titan using a machine credential
-
-# 5\. sends the event to the ingestion API
-
-# 
-
-# \## Endpoint
-
-# 
-
-# Windows endpoint telemetry is collected using:
-
-# 
-
-# \- Sysmon
+# \- Windows Sysmon
 
 # \- Windows Event Logs
 
@@ -268,13 +108,39 @@
 
 # \- Elasticsearch
 
-# 
-
-# A dedicated Titan bridge queries Sysmon process-creation telemetry from Elasticsearch and forwards normalized events into Titan.
+# \- persistent `search\_after` checkpointing
 
 # 
 
-# The bridge maintains a persistent `search\_after` checkpoint so ingestion can resume after a restart without starting over.
+# \### Control and Investigation Plane
+
+# 
+
+# Titan provides:
+
+# 
+
+# \- authenticated sensor ingestion
+
+# \- event normalization
+
+# \- deterministic detection
+
+# \- evidence preservation
+
+# \- security findings
+
+# \- AI-assisted triage
+
+# \- grounding controls
+
+# \- analyst assignment
+
+# \- notes
+
+# \- status changes
+
+# \- investigation history
 
 # 
 
@@ -282,11 +148,7 @@
 
 # 
 
-# \# Detection Engineering
-
-# 
-
-# Titan currently implements deterministic detection rules including:
+# \## Detection Engineering
 
 # 
 
@@ -294,23 +156,23 @@
 
 # |---|---|---|
 
-# | AUTH-001 | Repeated authentication failures | T1110 |
+# | `AUTH-001` | Repeated authentication failures | T1110 |
 
-# | AUTH-002 | Password spraying across multiple accounts | T1110.003 |
+# | `AUTH-002` | Password spraying across multiple accounts | T1110.003 |
 
-# | AUTH-003 | Successful login following repeated failures | T1110 |
+# | `AUTH-003` | Successful login following repeated failures | T1110 |
 
-# | NET-001 | Network reconnaissance / scanning | T1046 |
+# | `NET-001` | Network reconnaissance / scanning | T1046 |
 
-# | ENDPOINT-001 | Suspicious PowerShell execution | T1059.001 |
-
-# 
-
-# Detections create a `SecurityFinding` rather than allowing the AI model to independently decide whether an incident exists.
+# | `ENDPOINT-001` | Suspicious PowerShell execution | T1059.001 |
 
 # 
 
-# Each finding retains references to the exact security events that triggered it.
+# Titan does \*\*not\*\* ask the AI model to decide whether an incident exists.
+
+# 
+
+# Deterministic rules create a `SecurityFinding`, and the exact triggering events are preserved as evidence.
 
 # 
 
@@ -318,19 +180,15 @@
 
 # 
 
-# \# Evidence-Driven Investigations
+# \## Evidence-Driven Investigation
 
 # 
 
-# A core design principle of Titan is:
+# A core Titan principle is:
 
 # 
 
-# > AI can interpret evidence, but it cannot replace evidence.
-
-# 
-
-# Every security finding is tied to the exact underlying telemetry that produced it.
+# > \*\*AI can interpret evidence, but it cannot replace evidence.\*\*
 
 # 
 
@@ -338,23 +196,23 @@
 
 # Raw telemetry
 
-# &#x20;     ↓
+# &#x20;   ↓
 
 # Normalized event
 
-# &#x20;     ↓
+# &#x20;   ↓
 
 # Deterministic detection
 
-# &#x20;     ↓
+# &#x20;   ↓
 
 # Security finding
 
-# &#x20;     ↓
+# &#x20;   ↓
 
 # Exact evidence
 
-# &#x20;     ↓
+# &#x20;   ↓
 
 # AI-assisted interpretation
 
@@ -370,7 +228,7 @@
 
 # 
 
-# \# AI-Assisted Triage
+# \## AI-Assisted Triage
 
 # 
 
@@ -378,11 +236,7 @@
 
 # 
 
-# Before AI analysis occurs, Titan builds a controlled payload containing only approved security evidence and deterministic findings.
-
-# 
-
-# Claude produces structured output including:
+# The model receives a controlled payload containing approved evidence and deterministic facts, then returns structured analysis including:
 
 # 
 
@@ -404,7 +258,47 @@
 
 # 
 
-# Titan then applies a separate grounding policy before presenting the result to the analyst.
+# Titan then applies its own grounding policy before presenting the result to the analyst.
+
+# 
+
+# \### Grounding Policy
+
+# 
+
+# Titan treats AI output as lower-authority than evidence.
+
+# 
+
+# ```text
+
+# Exact Evidence
+
+# &#x20;   ↓
+
+# Deterministic Titan Facts
+
+# &#x20;   ↓
+
+# Titan Grounding Policy
+
+# &#x20;   ↓
+
+# AI Conclusions
+
+# &#x20;   ↓
+
+# Human Analyst Judgment
+
+# ```
+
+# 
+
+# For example, reconnaissance may prove that scanning occurred, but it does \*\*not\*\* prove that the target was compromised.
+
+# 
+
+# Titan can therefore correct or constrain AI conclusions when the evidence does not support them.
 
 # 
 
@@ -412,93 +306,45 @@
 
 # 
 
-# \# AI Grounding
+# \## AI Reliability
 
 # 
 
-# Titan deliberately treats the model as a lower-authority reasoning layer.
-
-# 
-
-# The authority hierarchy is:
+# AI triage runs have explicit lifecycle states:
 
 # 
 
 # ```text
 
-# 1\. Exact security evidence
+# running → completed
 
-# 2\. Deterministic Titan analysis
-
-# 3\. Titan grounding policy
-
-# 4\. AI-generated conclusions
-
-# 5\. Human analyst judgment
+# &#x20;      ↘ failed
 
 # ```
 
 # 
 
-# For example, reconnaissance traffic may establish that scanning occurred, but it does \*\*not\*\* establish that the target was compromised.
+# Titan includes:
 
 # 
 
-# Titan can therefore override an AI conclusion when the supplied evidence does not support it.
-
-# 
-
-# \---
-
-# 
-
-# \# AI Reliability
-
-# 
-
-# AI investigations have an explicit lifecycle:
-
-# 
-
-# ```text
-
-# running
-
-# completed
-
-# failed
-
-# ```
-
-# 
-
-# Titan persists the investigation record before contacting the AI provider.
-
-# 
-
-# The AI integration includes:
-
-# 
-
-# \- explicit request timeout
+# \- explicit request timeouts
 
 # \- controlled retry behavior
 
-# \- temporary vs permanent provider errors
+# \- temporary vs permanent provider error handling
 
-# \- timeout handling
+# \- persistent failed-run records
 
 # \- duplicate-running-run prevention
 
-# \- persistent failure records
-
-# \- nullable output for unsuccessful runs
+# \- null-safe API serialization
 
 # \- safe frontend rendering of failed investigations
 
 # 
 
-# A failed AI request therefore does not destroy the investigation record or break the analyst case page.
+# A provider failure does not erase the investigation or break the analyst case page.
 
 # 
 
@@ -506,35 +352,35 @@
 
 # 
 
-# \# Analyst Workflow
+# \## Analyst Workflow
 
 # 
 
-# The Titan case interface allows an analyst to:
+# The Titan case interface supports:
 
 # 
 
-# \- inspect detection details
+# \- detection details
 
-# \- view supporting evidence
+# \- supporting evidence
 
-# \- run AI-assisted triage
+# \- AI-assisted triage
 
-# \- review previous AI investigations
+# \- AI investigation history
 
-# \- view grounding corrections
+# \- grounding corrections
 
-# \- assign or unassign a case
+# \- analyst assignment
 
-# \- change investigation status
+# \- case status changes
 
-# \- add analyst notes
+# \- analyst notes
 
-# \- review case activity history
+# \- case activity history
 
 # 
 
-# The workflow is designed around the idea that AI assists the analyst rather than autonomously closing incidents.
+# AI assists the analyst; it does not autonomously close incidents.
 
 # 
 
@@ -542,11 +388,11 @@
 
 # 
 
-# \# Application Security
+# \## Security Controls
 
 # 
 
-# \## Authentication
+# \### Authentication
 
 # 
 
@@ -562,23 +408,21 @@
 
 # 
 
-# \## Authorization
+# \### Authorization
 
 # 
 
-# Role-based access control protects security operations functionality.
+# \- role-based access control
+
+# \- analyst/admin protected security routes
 
 # 
 
-# Supported security roles include analyst and administrator access.
+# \### CSRF Protection
 
 # 
 
-# \## CSRF Protection
-
-# 
-
-# State-changing browser requests require a CSRF token tied to the authenticated session.
+# State-changing browser requests require a session-bound CSRF token.
 
 # 
 
@@ -598,11 +442,11 @@
 
 # 
 
-# \## Sensor Authentication
+# \### Sensor Authentication
 
 # 
 
-# Machine-to-machine sensor ingestion uses a dedicated API credential rather than browser session authentication.
+# Machine-to-machine ingestion uses a dedicated sensor credential instead of browser session authentication.
 
 # 
 
@@ -610,35 +454,51 @@
 
 # 
 
-# \# Infrastructure Hardening
+# \## Infrastructure Hardening
 
 # 
 
-# \## Least-Privilege Elasticsearch Access
+# The Raspberry Pi sensor environment was hardened beyond the original lab configuration.
 
 # 
 
-# The Sysmon bridge uses a dedicated Elasticsearch reader rather than the `elastic` superuser.
+# \### Least-Privilege Elasticsearch Access
 
 # 
 
-# The service account can read the required Winlogbeat data but cannot perform Elasticsearch administrative operations.
+# The Sysmon bridge uses a dedicated read-only Elasticsearch identity instead of the `elastic` superuser.
 
 # 
 
-# \## TLS Verification
+# The bridge can read the Winlogbeat data it requires but cannot perform Elasticsearch administrative operations.
 
 # 
 
-# The bridge verifies Elasticsearch using its HTTP certificate authority rather than disabling certificate validation.
+# \### Verified TLS
 
 # 
 
-# \## Non-Root Services
+# The Sysmon bridge validates Elasticsearch using its HTTP CA certificate instead of disabling certificate verification.
 
 # 
 
-# Both sensor bridges run under a dedicated `titan-sensor` Linux service account instead of `root`.
+# \### Non-Root Services
+
+# 
+
+# Titan sensor bridges run under a dedicated Linux service account:
+
+# 
+
+# ```text
+
+# titan-sensor
+
+# ```
+
+# 
+
+# Service files follow conventional Linux paths:
 
 # 
 
@@ -654,15 +514,15 @@
 
 # 
 
-# \## Restricted Suricata Logs
+# \### Restricted Suricata Telemetry
 
 # 
 
-# Suricata security telemetry is no longer world-readable.
+# Suricata's `eve.json` telemetry is no longer world-readable.
 
 # 
 
-# A dedicated reader group grants Titan only the access necessary to consume `eve.json`.
+# A dedicated reader group grants Titan only the access required to consume the log.
 
 # 
 
@@ -670,21 +530,23 @@
 
 # 
 
-# \# Testing
+# \## Testing
 
 # 
 
-# Titan currently has \*\*63 passing backend tests\*\*.
+# \### 63 Backend Tests Passing
 
 # 
 
-# Coverage includes:
+# Test coverage includes:
 
 # 
 
 # \- authentication
 
-# \- sessions
+# \- session management
+
+# \- session expiration and revocation
 
 # \- CSRF protection
 
@@ -692,9 +554,13 @@
 
 # \- sensor authentication
 
+# \- authentication detections
+
 # \- network detections
 
 # \- endpoint detections
+
+# \- deterministic triage
 
 # \- AI grounding
 
@@ -710,11 +576,11 @@
 
 # 
 
-# Tests use isolated configuration values rather than loading development secrets.
+# Tests use dummy credentials and isolated configuration rather than loading development secrets.
 
 # 
 
-# The test environment uses an in-memory SQLite database and dummy API credentials.
+# The test environment uses an in-memory SQLite database.
 
 # 
 
@@ -722,11 +588,11 @@
 
 # 
 
-# \# Continuous Integration
+# \## Continuous Integration
 
 # 
 
-# GitHub Actions automatically installs the backend in a clean environment and executes the test suite on every push.
+# GitHub Actions automatically runs the backend test suite on every push.
 
 # 
 
@@ -748,13 +614,13 @@
 
 # &#x20; ↓
 
-# 63 tests
+# 63 passing tests
 
 # ```
 
 # 
 
-# The current CI pipeline passes successfully.
+# \*\*Current CI status: passing\*\*
 
 # 
 
@@ -762,7 +628,7 @@
 
 # 
 
-# \# Frontend
+# \## Frontend
 
 # 
 
@@ -782,7 +648,7 @@
 
 # 
 
-# A production Next.js build is validated successfully before release.
+# The frontend has also been validated with a successful optimized production build.
 
 # 
 
@@ -790,77 +656,31 @@
 
 # 
 
-# \# Technology Stack
+# \## Tech Stack
 
 # 
 
-# \## Backend
+# | Layer | Technology |
 
-# 
+# |---|---|
 
-# \- Python 3.13
+# | Backend | Python 3.13, FastAPI, Pydantic |
 
-# \- FastAPI
+# | Database | PostgreSQL, SQLAlchemy, Alembic |
 
-# \- Pydantic
+# | Network Security | Suricata |
 
-# \- SQLAlchemy
+# | Endpoint Security | Sysmon, Windows Event Logs |
 
-# \- PostgreSQL
+# | Telemetry Pipeline | Winlogbeat, Elasticsearch |
 
-# \- Alembic
+# | AI | Anthropic Claude |
 
-# 
+# | Frontend | Next.js, React, TypeScript, Tailwind CSS |
 
-# \## Security / Telemetry
+# | Infrastructure | Raspberry Pi, Linux, systemd, Windows |
 
-# 
-
-# \- Suricata
-
-# \- Sysmon
-
-# \- Winlogbeat
-
-# \- Elasticsearch
-
-# 
-
-# \## AI
-
-# 
-
-# \- Anthropic Claude
-
-# 
-
-# \## Frontend
-
-# 
-
-# \- Next.js
-
-# \- React
-
-# \- TypeScript
-
-# \- Tailwind CSS
-
-# 
-
-# \## Infrastructure
-
-# 
-
-# \- Raspberry Pi
-
-# \- Linux
-
-# \- systemd
-
-# \- Windows
-
-# \- GitHub Actions
+# | CI | GitHub Actions |
 
 # 
 
@@ -868,7 +688,7 @@
 
 # 
 
-# \# Repository Structure
+# \## Repository Structure
 
 # 
 
@@ -916,11 +736,11 @@
 
 # 
 
-# \# Known Limitations
+# \## Known Limitations
 
 # 
 
-# Titan is an engineering and portfolio project rather than a production enterprise SOC.
+# Titan is intentionally a \*\*lab-scale engineering project\*\* rather than a production enterprise SOC.
 
 # 
 
@@ -928,25 +748,23 @@
 
 # 
 
-# \- lab-scale deployment
-
-# \- limited number of telemetry sources
+# \- limited telemetry sources
 
 # \- limited detection catalog
 
 # \- single-node development architecture
 
-# \- sensor credentials are managed locally rather than through an enterprise secrets platform
-
 # \- no distributed rate-limit store
 
 # \- no high-availability deployment
+
+# \- no enterprise secrets-management platform
 
 # \- no large-scale event-processing pipeline
 
 # 
 
-# These limitations are intentional boundaries rather than claims of enterprise-scale readiness.
+# These are documented engineering boundaries, not claims of enterprise production readiness.
 
 # 
 
@@ -954,19 +772,19 @@
 
 # 
 
-# \# Future Direction
+# \## Future Direction
 
 # 
 
-# Titan Security Operations is part of a broader project exploring privacy-first organizational intelligence.
+# Titan Security Operations is part of a broader effort to explore \*\*privacy-first organizational intelligence\*\*.
 
 # 
 
-# The long-term Titan vision is to transform approved organizational information into explainable, evidence-backed decision support while preserving strong security, provenance, and human oversight.
+# The long-term direction is to transform approved organizational information into explainable, evidence-backed decision support while preserving strong security, provenance, and human oversight.
 
 # 
 
-# The security platform developed here provides the technical foundation for protecting that future system.
+# The SOC work provides a technical foundation for protecting that future platform.
 
 # 
 
@@ -974,61 +792,53 @@
 
 # 
 
-# \# What I Learned
+# \## What I Learned
 
 # 
 
-# Building Titan gave me practical experience connecting security concepts that are often learned separately.
+# Building Titan connected security concepts that are often learned separately:
 
 # 
 
-# I had to reason about:
+# \- telemetry collection
+
+# \- event normalization
+
+# \- detection engineering
+
+# \- evidence preservation
+
+# \- API security
+
+# \- authentication
+
+# \- session management
+
+# \- RBAC
+
+# \- CSRF protection
+
+# \- AI grounding
+
+# \- analyst workflows
+
+# \- failure handling
+
+# \- Linux service hardening
+
+# \- TLS verification
+
+# \- least privilege
+
+# \- automated testing
+
+# \- continuous integration
 
 # 
 
-# \- where telemetry originates
-
-# \- how it moves across systems
-
-# \- how detections should be structured
-
-# \- how evidence should be preserved
-
-# \- what AI should and should not be allowed to conclude
-
-# \- how analyst workflows interact with backend state
-
-# \- how authentication and authorization affect security tooling
-
-# \- how services should operate under least privilege
-
-# \- how failures should be persisted and recovered
-
-# \- how tests and CI protect changes over time
+# The biggest lesson was:
 
 # 
 
-# The biggest lesson was that a security platform is not simply a collection of alerts.
-
-# 
-
-# It is a chain of trust from:
-
-# 
-
-# ```text
-
-# telemetry
-
-# → evidence
-
-# → detection
-
-# → investigation
-
-# → reasoning
-
-# → human decision
-
-# ```
+# > \*\*A security platform is not simply a collection of alerts. It is a chain of trust from telemetry → evidence → detection → investigation → reasoning → human decision.\*\*
 
