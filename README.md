@@ -1,4 +1,4 @@
-# Titan
+# Titan Security Operations
 
 > **Evidence-driven, AI-assisted security operations and investigation platform**
 
