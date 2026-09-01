@@ -415,16 +415,6 @@ These are documented engineering boundaries, not claims of enterprise production
 
 ---
 
-## Future Direction
-
-Titan Security Operations is part of a broader effort to explore **privacy-first organizational intelligence**.
-
-The long-term direction is to transform approved organizational information into explainable, evidence-backed decision support while preserving strong security, provenance, and human oversight.
-
-The SOC work provides a technical foundation for protecting that future platform.
-
----
-
 ## What I Learned
 
 Building Titan connected security concepts that are often learned separately:
