@@ -12,6 +12,22 @@ Titan is an independent cybersecurity engineering project built to explore how m
 
 Titan combines live **network** and **endpoint** telemetry with deterministic detections, evidence-backed security findings, grounded AI analysis, and a browser-based analyst workflow.
 
+## Screenshots
+
+### Security Findings
+
+![Titan security findings](docs/screenshots/findings-list.png)
+
+### Finding Investigation
+
+![Titan finding investigation](docs/screenshots/finding-detail.png)
+
+### AI-Assisted Triage
+
+![Titan AI-assisted triage](docs/screenshots/ai-triage.png)
+
+---
+
 ### Data Flow
 
 ```text
