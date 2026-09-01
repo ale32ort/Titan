@@ -8,6 +8,20 @@ Titan is an independent cybersecurity engineering project built to explore how m
 
 ---
 
+## Architecture
+
+![Titan security operations architecture](docs/titan-architecture.png)
+
+Titan follows an evidence-first security workflow:
+
+**SEE → DETECT → REASON → ACT**
+
+Network and endpoint telemetry is normalized into security events, evaluated by deterministic detection logic, preserved as exact evidence, analyzed with Claude Sonnet 5 under Titan's grounding policy, and presented to an analyst for investigation and action.
+
+> **Evidence → Facts → AI → Human**
+
+---
+
 ## What Titan Does
 
 Titan combines live **network** and **endpoint** telemetry with deterministic detections, evidence-backed security findings, grounded AI analysis, and a browser-based analyst workflow.
